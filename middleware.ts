@@ -1,27 +1,20 @@
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
 
-export async function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl
-
-  if (!pathname.startsWith('/admin') || pathname === '/admin/login') {
-    return NextResponse.next()
-  }
-
-  const res = NextResponse.next()
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({ request })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() { return req.cookies.getAll() },
+        getAll() { return request.cookies.getAll() },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            req.cookies.set(name, value)
-            res.cookies.set(name, value, options)
-          })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          )
         },
       },
     }
@@ -29,11 +22,41 @@ export async function middleware(req: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) {
-    return NextResponse.redirect(new URL('/admin/login', req.url))
+  // Protect /admin/* routes (except /admin/login)
+  if (
+    request.nextUrl.pathname.startsWith('/admin') &&
+    !request.nextUrl.pathname.startsWith('/admin/login')
+  ) {
+    if (!user) {
+      return NextResponse.redirect(new URL('/admin/login', request.url))
+    }
+
+    const { data: adminData } = await supabase
+      .from('admin_users')
+      .select('role')
+      .eq('user_id', user.id)
+      .single()
+
+    if (!adminData) {
+      await supabase.auth.signOut()
+      return NextResponse.redirect(new URL('/admin/login?error=unauthorized', request.url))
+    }
   }
 
-  return res
+  // Redirect already-logged-in admins away from login page
+  if (request.nextUrl.pathname === '/admin/login' && user) {
+    const { data: adminData } = await supabase
+      .from('admin_users')
+      .select('role')
+      .eq('user_id', user.id)
+      .single()
+
+    if (adminData) {
+      return NextResponse.redirect(new URL('/admin', request.url))
+    }
+  }
+
+  return response
 }
 
 export const config = {
