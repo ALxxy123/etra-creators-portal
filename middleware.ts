@@ -21,6 +21,7 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api/admin')
 
   // Protect /admin/* routes (except /admin/login)
   if (
@@ -28,6 +29,7 @@ export async function middleware(request: NextRequest) {
     !request.nextUrl.pathname.startsWith('/admin/login')
   ) {
     if (!user) {
+      if (isApiRoute) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       return NextResponse.redirect(new URL('/admin/login', request.url))
     }
 
@@ -39,8 +41,22 @@ export async function middleware(request: NextRequest) {
 
     if (!adminData) {
       await supabase.auth.signOut()
+      if (isApiRoute) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       return NextResponse.redirect(new URL('/admin/login?error=unauthorized', request.url))
     }
+  }
+
+  // Protect /api/admin/* routes
+  if (isApiRoute) {
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { data: adminData } = await supabase
+      .from('admin_users')
+      .select('role')
+      .eq('user_id', user.id)
+      .single()
+
+    if (!adminData) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   // Redirect already-logged-in admins away from login page
@@ -60,5 +76,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/api/admin/:path*'],
 }

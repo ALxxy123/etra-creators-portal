@@ -20,11 +20,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const body = await req.json()
     const updates: Record<string, unknown> = {}
 
-    if (body.status) updates.status = body.status
+    const ALLOWED_STATUSES = ['new', 'reviewing', 'accepted', 'rejected'] as const
+    if (body.status) {
+      if (!(ALLOWED_STATUSES as readonly string[]).includes(body.status)) {
+        return NextResponse.json({ error: 'حالة غير صالحة' }, { status: 400 })
+      }
+      updates.status = body.status
+    }
+
     if (body.note_text !== undefined) {
+      const noteText = String(body.note_text).trim().slice(0, 1000)
+      if (noteText.length === 0) {
+        return NextResponse.json({ error: 'الملاحظة فارغة' }, { status: 400 })
+      }
       await supabaseAdmin.from('application_notes').insert({
         application_id: id,
-        note_text: body.note_text,
+        note_text: noteText,
         created_by: user.id,
       })
     }
@@ -37,7 +48,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         .select()
         .single() as { data: CreatorApplication | null; error: { message: string } | null }
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      if (error) return NextResponse.json({ error: 'خطأ في تحديث البيانات' }, { status: 500 })
 
       if (body.status === 'accepted' && data) {
         sendApplicationAcceptedEmail(data).catch(console.error)

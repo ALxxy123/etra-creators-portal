@@ -6,6 +6,19 @@ import type { CreatorApplication } from '@/types/database'
 
 export async function POST(req: NextRequest) {
   try {
+    // Check if registrations are open
+    const adminClient = createAdminClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: regSetting } = await (adminClient as any)
+      .from('platform_settings')
+      .select('value')
+      .eq('key', 'allow_registrations')
+      .single()
+
+    if (regSetting && regSetting.value === false) {
+      return NextResponse.json({ error: 'التسجيلات مغلقة حالياً' }, { status: 403 })
+    }
+
     const body = await req.json()
     const parsed = applicationSchema.safeParse(body)
     if (!parsed.success) {
@@ -13,7 +26,7 @@ export async function POST(req: NextRequest) {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const supabase = createAdminClient() as any
+    const supabase = adminClient as any
     const { data, error } = await supabase
       .from('creator_applications')
       .insert({

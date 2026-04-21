@@ -1,5 +1,14 @@
 import { ETRA_LOGO_URL } from '../logo'
 
+function safeUrl(raw: string | undefined): string {
+  if (!raw) return '#'
+  try {
+    const u = new URL(raw)
+    if (u.protocol === 'https:' || u.protocol === 'http:') return u.href
+  } catch { /* invalid URL */ }
+  return '#'
+}
+
 const specialtyPillStyle: Record<string, { bg: string; color: string; border: string }> = {
   mobile:    { bg: 'rgba(59,130,246,0.15)',  color: '#60a5fa', border: 'rgba(59,130,246,0.35)'  },
   uiux:      { bg: 'rgba(16,185,129,0.15)',  color: '#34d399', border: 'rgba(16,185,129,0.35)'  },
@@ -128,11 +137,11 @@ export function newApplicationAdminTemplate(data: {
                     </tr>
                     <tr>
                       <td style="padding:6px 0;color:#94a3b8;">لينكد إن / GitHub</td>
-                      <td style="padding:6px 0;"><a href="${data.linkedinOrGithub}" target="_blank" style="color:#60a5fa;text-decoration:none;word-break:break-all;">رابط الحساب ↗</a></td>
+                      <td style="padding:6px 0;"><a href="${safeUrl(data.linkedinOrGithub)}" target="_blank" style="color:#60a5fa;text-decoration:none;word-break:break-all;">رابط الحساب ↗</a></td>
                     </tr>
                     ${data.portfolio ? `<tr>
                       <td style="padding:6px 0;color:#94a3b8;">البورتفوليو</td>
-                      <td style="padding:6px 0;"><a href="${data.portfolio}" target="_blank" style="color:#60a5fa;text-decoration:none;word-break:break-all;">رابط البورتفوليو ↗</a></td>
+                      <td style="padding:6px 0;"><a href="${safeUrl(data.portfolio)}" target="_blank" style="color:#60a5fa;text-decoration:none;word-break:break-all;">رابط البورتفوليو ↗</a></td>
                     </tr>` : ''}
                   </table>
                 </td>

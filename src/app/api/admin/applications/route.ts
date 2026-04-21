@@ -22,8 +22,13 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get('search')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
-    const sortBy = searchParams.get('sort_by') || 'created_at'
-    const sortOrder = searchParams.get('sort_order') || 'desc'
+    const ALLOWED_SORT = ['created_at', 'full_name', 'status', 'specialty'] as const
+    type AllowedSort = typeof ALLOWED_SORT[number]
+    const rawSort = searchParams.get('sort_by') || 'created_at'
+    const sortBy: AllowedSort = (ALLOWED_SORT as readonly string[]).includes(rawSort)
+      ? (rawSort as AllowedSort)
+      : 'created_at'
+    const sortOrder = searchParams.get('sort_order') === 'asc' ? 'asc' : 'desc'
     const from = (page - 1) * limit
 
     let query = supabaseAdmin
@@ -38,7 +43,7 @@ export async function GET(req: NextRequest) {
     if (search) query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,tracking_code.ilike.%${search}%`)
 
     const { data, error, count } = await query
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return NextResponse.json({ error: 'خطأ في جلب البيانات' }, { status: 500 })
 
     return NextResponse.json({ data, count, page, limit })
   } catch (err) {
