@@ -1,6 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# بوابة مبدعي إترا للتمكين التقني
 
-## Getting Started
+منصة تسجيل واختيار المبدعين التقنيين لشركة إترا للتمكين التقني.
+
+## المميزات
+
+- تسجيل متعدد الخطوات (معايير ← بنود ← نموذج ← تأكيد)
+- نظام كود التتبع لمتابعة حالة الطلب
+- رفع السيرة الذاتية PDF إلى Supabase Storage
+- لوحة تحكم إدارية كاملة مع فلترة وبحث وتحديث الحالات
+- تصميم داكن بنظام ألوان إترا (RTL عربي كامل)
+
+## متغيرات البيئة
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+## هيكل قاعدة البيانات
+
+### الجداول
+
+- `creator_applications` - طلبات التسجيل مع كود التتبع
+- `application_status_history` - تاريخ تغييرات الحالة
+- `application_notes` - ملاحظات المدير
+- `admin_users` - مستخدمو لوحة التحكم
+
+### الدوال (RPC)
+
+- `check_application_status(tracking_code)` - للتحقق من حالة الطلب
+- `generate_tracking_code()` - trigger لتوليد كود التتبع تلقائياً
+
+### Views
+
+- `application_stats` - إحصائيات الطلبات
+
+### Storage
+
+- `creator-cvs` - bucket لتخزين ملفات PDF
+
+## النشر على Vercel
+
+1. اربط المستودع بـ Vercel
+2. أضف متغيرات البيئة في إعدادات المشروع
+3. انشر المشروع
+
+## Getting Started (Development)
 
 First, run the development server:
 
