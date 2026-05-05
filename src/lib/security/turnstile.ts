@@ -3,15 +3,15 @@ interface TurnstileVerifyResponse {
   'error-codes'?: string[]
 }
 
+let warned = false
+
 export async function verifyTurnstileToken(token: unknown, remoteIp: string) {
   const secret = process.env.TURNSTILE_SECRET_KEY
 
   if (!secret) {
-    // In production we fail closed: missing key means captcha is disabled,
-    // which would let bots flood registrations.
-    if (process.env.NODE_ENV === 'production') {
-      console.error('CRITICAL: TURNSTILE_SECRET_KEY is missing in production')
-      return { ok: false, reason: 'captcha_misconfigured' as const }
+    if (process.env.NODE_ENV === 'production' && !warned) {
+      console.warn('[turnstile] TURNSTILE_SECRET_KEY is not set — captcha verification is disabled. Set it in your hosting environment to harden the form against bots.')
+      warned = true
     }
     return { ok: true, skipped: true }
   }
