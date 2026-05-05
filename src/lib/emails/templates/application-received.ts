@@ -1,4 +1,5 @@
-import { ETRA_LOGO_URL } from '../logo'
+import { ETRA_LOGO_SRC } from '../logo'
+import { getAppUrl } from '../app-url'
 
 export function applicationReceivedTemplate(data: {
   applicantName: string
@@ -8,6 +9,7 @@ export function applicationReceivedTemplate(data: {
   submissionDate: string
 }): string {
   const year = new Date().getFullYear()
+  const appUrl = getAppUrl()
   return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -38,7 +40,7 @@ export function applicationReceivedTemplate(data: {
         <!-- Header -->
         <tr>
           <td style="background:linear-gradient(135deg,#5234B7 0%,#9E59CD 100%);padding:40px 32px 36px;text-align:center;">
-            <img src="${ETRA_LOGO_URL}" alt="إترا" height="44" style="display:block;margin:0 auto 10px;height:44px;width:auto;" />
+            <img src="${ETRA_LOGO_SRC}" alt="إترا" height="44" style="display:block;margin:0 auto 10px;height:44px;width:auto;" />
             <p style="margin:0;font-size:14px;color:rgba(255,255,255,0.80);letter-spacing:0.5px;">إترا للتمكين التقني</p>
           </td>
         </tr>
@@ -218,7 +220,7 @@ export function applicationReceivedTemplate(data: {
             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px;">
               <tr>
                 <td align="center">
-                  <a href="https://etra-creators.vercel.app/track" style="display:inline-block;background:linear-gradient(135deg,#5234B7 0%,#9E59CD 100%);color:#ffffff;text-decoration:none;padding:15px 36px;border-radius:10px;font-weight:700;font-size:15px;letter-spacing:0.3px;box-shadow:0 6px 20px rgba(82,52,183,0.30);">متابعة حالة طلبي ←</a>
+                  <a href="${appUrl}/track" style="display:inline-block;background:linear-gradient(135deg,#5234B7 0%,#9E59CD 100%);color:#ffffff;text-decoration:none;padding:15px 36px;border-radius:10px;font-weight:700;font-size:15px;letter-spacing:0.3px;box-shadow:0 6px 20px rgba(82,52,183,0.30);">متابعة حالة طلبي ←</a>
                 </td>
               </tr>
             </table>
@@ -238,7 +240,7 @@ export function applicationReceivedTemplate(data: {
         <!-- Footer -->
         <tr>
           <td style="background-color:#faf9ff;padding:24px 40px;text-align:center;">
-            <img src="${ETRA_LOGO_URL}" alt="إترا" height="28" style="display:block;margin:0 auto 10px;height:28px;width:auto;opacity:0.7;" />
+            <img src="${ETRA_LOGO_SRC}" alt="إترا" height="28" style="display:block;margin:0 auto 10px;height:28px;width:auto;opacity:0.7;" />
             <p style="margin:0 0 5px;font-size:13px;color:#6b7280;">إترا للتمكين التقني — تبوك، المملكة العربية السعودية</p>
             <p style="margin:0 0 5px;font-size:12px;color:#9ca3af;">هذا البريد أُرسل تلقائياً · للاستفسار: <a href="mailto:etrahub@gmail.com" style="color:#7c3aed;text-decoration:none;">etrahub@gmail.com</a></p>
             <p style="margin:0;font-size:12px;color:#9ca3af;">&copy; ${year} ETRA. جميع الحقوق محفوظة.</p>

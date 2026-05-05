@@ -1,8 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { checkRateLimit, getClientIp, rateLimitHeaders } from '@/lib/security/rate-limit'
 import type { CreatorApplication } from '@/types/database'
 
 export async function GET(req: NextRequest) {
+  const ip = getClientIp(req)
+  const rateLimit = checkRateLimit(`track:${ip}`, {
+    limit: 30,
+    windowMs: 5 * 60 * 1000,
+  })
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'too_many_requests' },
+      { status: 429, headers: rateLimitHeaders(rateLimit) },
+    )
+  }
+
   const code = req.nextUrl.searchParams.get('code')
   if (!code) {
     return NextResponse.json({ error: 'missing_code' }, { status: 400 })

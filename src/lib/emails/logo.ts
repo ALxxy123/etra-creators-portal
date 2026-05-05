@@ -1,9 +1,18 @@
-export const ETRA_LOGO_URL = process.env.NEXT_PUBLIC_APP_URL
-  ? `${process.env.NEXT_PUBLIC_APP_URL}/etra-logo.png`
-  : 'https://etra-creators.vercel.app/etra-logo.png'
+import path from 'node:path'
+import type { Attachment } from 'nodemailer/lib/mailer'
+
+export const ETRA_LOGO_CID = 'etra-logo@etra'
+export const ETRA_LOGO_SRC = `cid:${ETRA_LOGO_CID}`
+
+export const etraLogoAttachment: Attachment = {
+  filename: 'etra-logo.png',
+  path: path.join(process.cwd(), 'public', 'etra-logo.png'),
+  cid: ETRA_LOGO_CID,
+  contentType: 'image/png',
+}
 
 export const etraLogoHtml = `<img
-    src="${ETRA_LOGO_URL}"
+    src="${ETRA_LOGO_SRC}"
     alt="إترا للتمكين التقني"
     width="120"
     height="40"
@@ -15,7 +24,7 @@ export const etraLogoHtml = `<img
 
 // Use for dark/purple header backgrounds — makes logo fully white
 export const etraLogoWhiteHtml = `<img
-    src="${ETRA_LOGO_URL}"
+    src="${ETRA_LOGO_SRC}"
     alt="إترا للتمكين التقني"
     width="120"
     height="40"

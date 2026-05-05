@@ -5,6 +5,7 @@ export type Specialty = 'mobile' | 'uiux' | 'frontend' | 'backend' | 'fullstack'
 export type Level = 'mid' | 'senior'
 export type YearsOfExperience = '3-4' | '5-7' | '8-10' | '10+'
 export type AdminRole = 'admin' | 'reviewer'
+export type PlatformSettingKey = 'allow_registrations' | 'email_notifications'
 
 export interface CriteriaAcknowledged {
   experience_3y: boolean
@@ -64,6 +65,12 @@ export interface AdminUser {
   created_at: string
 }
 
+export interface PlatformSetting {
+  key: PlatformSettingKey
+  value: boolean
+  updated_at: string
+}
+
 export interface ApplicationStats {
   total: number
   new: number
@@ -112,6 +119,12 @@ export interface Database {
         Row: AdminUser
         Insert: Omit<AdminUser, 'created_at'>
         Update: never
+        Relationships: []
+      }
+      platform_settings: {
+        Row: PlatformSetting
+        Insert: Omit<PlatformSetting, 'updated_at'> & { updated_at?: string }
+        Update: Partial<Pick<PlatformSetting, 'value' | 'updated_at'>>
         Relationships: []
       }
       email_notifications: {

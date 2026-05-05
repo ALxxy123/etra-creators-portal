@@ -1,13 +1,23 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Script from 'next/script'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { applicationSchema, type ApplicationFormData } from '@/lib/validations/application'
 import { cities, specialtyLabels, levelLabels, experienceLabels } from '@/lib/utils'
+
+declare global {
+  interface Window {
+    onEtraTurnstileSuccess?: (token: string) => void
+    onEtraTurnstileExpired?: () => void
+  }
+}
+
+const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
 const steps = [
   { id: 1, label: 'الحساب' },
@@ -59,6 +69,8 @@ export default function FormPage() {
   const [cvFile, setCvFile] = useState<File | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [dragOver, setDragOver] = useState(false)
+  const [companyWebsite, setCompanyWebsite] = useState('')
+  const [turnstileToken, setTurnstileToken] = useState('')
 
   const {
     register,
@@ -86,6 +98,18 @@ export default function FormPage() {
   const watchedSpecialty = useWatch({ control, name: 'specialty' })
   const watchedBio = useWatch({ control, name: 'bio' })
 
+  useEffect(() => {
+    if (!turnstileSiteKey) return
+
+    window.onEtraTurnstileSuccess = (token: string) => setTurnstileToken(token)
+    window.onEtraTurnstileExpired = () => setTurnstileToken('')
+
+    return () => {
+      delete window.onEtraTurnstileSuccess
+      delete window.onEtraTurnstileExpired
+    }
+  }, [])
+
   const handleFile = (file: File) => {
     if (file.type !== 'application/pdf') {
       toast.error('يُقبل فقط ملفات PDF')
@@ -106,6 +130,11 @@ export default function FormPage() {
   }, [])
 
   const onSubmit = async (data: ApplicationFormData) => {
+    if (turnstileSiteKey && !turnstileToken) {
+      toast.error('يرجى إكمال التحقق الأمني')
+      return
+    }
+
     setSubmitting(true)
     try {
       let cvPath = ''
@@ -121,7 +150,12 @@ export default function FormPage() {
       const res = await fetch('/api/applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, cv_file_path: cvPath || null }),
+        body: JSON.stringify({
+          ...data,
+          cv_file_path: cvPath || null,
+          company_website: companyWebsite,
+          turnstile_token: turnstileToken || null,
+        }),
       })
       const result = await res.json()
       if (!res.ok) throw new Error(result.error || 'فشل إرسال الطلب')
@@ -228,6 +262,17 @@ export default function FormPage() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <input
+          type="text"
+          value={companyWebsite}
+          onChange={(e) => setCompanyWebsite(e.target.value)}
+          name="company_website"
+          autoComplete="off"
+          tabIndex={-1}
+          aria-hidden="true"
+          className="hidden"
+        />
+
         {/* Personal & contact (always visible as account + basic fields) */}
         <motion.section
           initial={{ opacity: 0, y: 10 }}
@@ -478,6 +523,18 @@ export default function FormPage() {
           >
             رجوع
           </button>
+          {turnstileSiteKey && (
+            <>
+              <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" />
+              <div
+                className="cf-turnstile"
+                data-sitekey={turnstileSiteKey}
+                data-theme="dark"
+                data-callback="onEtraTurnstileSuccess"
+                data-expired-callback="onEtraTurnstileExpired"
+              />
+            </>
+          )}
           <button
             type="submit"
             disabled={submitting}

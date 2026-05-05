@@ -3,9 +3,10 @@ import { applicationReceivedTemplate } from './templates/application-received'
 import { applicationAcceptedTemplate } from './templates/application-accepted'
 import { newApplicationAdminTemplate } from './templates/new-application-admin'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { etraLogoAttachment } from './logo'
 
 const GMAIL_USER = process.env.GMAIL_USER!
-const ADMIN_EMAIL = 'etrahub@gmail.com'
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'etrahub@gmail.com'
 
 const specialtyLabels: Record<string, string> = {
   mobile: 'تطبيقات الجوال',
@@ -39,6 +40,7 @@ export async function sendApplicationReceivedEmail(application: {
       from: `"إترا للتمكين التقني" <${GMAIL_USER}>`,
       to: application.email,
       subject: `✅ تم استلام طلبك — رمز التتبع: ${application.tracking_code}`,
+      attachments: [etraLogoAttachment],
       html: applicationReceivedTemplate({
         applicantName: application.full_name,
         trackingCode: application.tracking_code,
@@ -84,6 +86,7 @@ export async function sendApplicationAcceptedEmail(application: {
       from: `"إترا للتمكين التقني" <${GMAIL_USER}>`,
       to: application.email,
       subject: `🎉 مبارك! تم قبولك في شبكة مبدعي إترا`,
+      attachments: [etraLogoAttachment],
       html: applicationAcceptedTemplate({
         applicantName: application.full_name,
         trackingCode: application.tracking_code,
@@ -142,6 +145,7 @@ export async function sendNewApplicationAdminAlert(
       from: `"بوابة مبدعي إترا" <${GMAIL_USER}>`,
       to: ADMIN_EMAIL,
       subject: `🔔 متقدم جديد: ${application.full_name} — ${specialtyLabels[application.specialty] || application.specialty}`,
+      attachments: [etraLogoAttachment],
       html: newApplicationAdminTemplate({
         applicantName: application.full_name,
         applicantEmail: application.email,

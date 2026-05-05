@@ -1,12 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { randomUUID } from 'crypto'
+import { checkRateLimit, getClientIp, rateLimitHeaders } from '@/lib/security/rate-limit'
 
 // PDF magic bytes: %PDF-
 const PDF_MAGIC = Buffer.from([0x25, 0x50, 0x44, 0x46, 0x2D])
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req)
+    const rateLimit = checkRateLimit(`upload-cv:${ip}`, {
+      limit: 8,
+      windowMs: 15 * 60 * 1000,
+    })
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'تم تجاوز الحد المسموح من محاولات الرفع. حاول لاحقاً.' },
+        { status: 429, headers: rateLimitHeaders(rateLimit) },
+      )
+    }
+
     const formData = await req.formData()
     const file = formData.get('cv') as File | null
 

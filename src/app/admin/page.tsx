@@ -5,7 +5,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { StatusBadge } from '@/components/ui/badge'
 import { specialtyLabels, levelLabels, statusLabels, formatDate } from '@/lib/utils'
-import type { CreatorApplication, ApplicationStatus } from '@/types/database'
+import type {
+  ApplicationNote,
+  ApplicationStatus,
+  ApplicationStatusHistory,
+  CreatorApplication,
+} from '@/types/database'
 
 interface Stats {
   total: number
@@ -23,6 +28,16 @@ const statsCards = [
   { key: 'rejected', label: 'مرفوض', color: '#F87171' },
 ]
 
+function formatDateTime(dateStr: string) {
+  return new Date(dateStr).toLocaleString('ar-SA', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 export default function AdminDashboard() {
   const [applications, setApplications] = useState<CreatorApplication[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
@@ -32,6 +47,10 @@ export default function AdminDashboard() {
   const [filterSpecialty, setFilterSpecialty] = useState('all')
   const [filterLevel, setFilterLevel] = useState('all')
   const [selectedApp, setSelectedApp] = useState<CreatorApplication | null>(null)
+  const [selectedNotes, setSelectedNotes] = useState<ApplicationNote[]>([])
+  const [selectedHistory, setSelectedHistory] = useState<ApplicationStatusHistory[]>([])
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [cvLoading, setCvLoading] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [page, setPage] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
@@ -76,6 +95,33 @@ export default function AdminDashboard() {
     void loadData()
   }, [loadData])
 
+  const openApp = async (app: CreatorApplication) => {
+    setSelectedApp(app)
+    setNoteText('')
+    setSelectedNotes([])
+    setSelectedHistory([])
+    setDetailLoading(true)
+    try {
+      const res = await fetch(`/api/admin/applications/${app.id}`)
+      if (res.ok) {
+        const detail = await res.json()
+        if (detail.application) setSelectedApp(detail.application)
+        setSelectedNotes(detail.notes || [])
+        setSelectedHistory(detail.history || [])
+      }
+    } catch {
+      toast.error('فشل تحميل التفاصيل')
+    } finally {
+      setDetailLoading(false)
+    }
+  }
+
+  const closeApp = () => {
+    setSelectedApp(null)
+    setSelectedNotes([])
+    setSelectedHistory([])
+  }
+
   const updateStatus = async (id: string, status: ApplicationStatus) => {
     try {
       const res = await fetch(`/api/admin/applications/${id}`, {
@@ -86,7 +132,15 @@ export default function AdminDashboard() {
       if (!res.ok) throw new Error()
       toast.success(`تم تغيير الحالة إلى ${statusLabels[status]}`)
       setApplications((prev) => prev.map((a) => a.id === id ? { ...a, status } : a))
-      if (selectedApp?.id === id) setSelectedApp((prev) => prev ? { ...prev, status } : null)
+      if (selectedApp?.id === id) {
+        setSelectedApp((prev) => prev ? { ...prev, status } : null)
+        // refresh history after status change
+        const detailRes = await fetch(`/api/admin/applications/${id}`)
+        if (detailRes.ok) {
+          const detail = await detailRes.json()
+          setSelectedHistory(detail.history || [])
+        }
+      }
       loadData()
     } catch {
       toast.error('فشل تحديث الحالة')
@@ -103,12 +157,46 @@ export default function AdminDashboard() {
         body: JSON.stringify({ note_text: noteText }),
       })
       if (!res.ok) throw new Error()
+      const data = await res.json()
       toast.success('تم حفظ الملاحظة')
       setNoteText('')
+      if (data.note) setSelectedNotes((prev) => [data.note, ...prev])
     } catch {
       toast.error('فشل حفظ الملاحظة')
     } finally {
       setSavingNote(false)
+    }
+  }
+
+  const deleteNote = async (noteId: string) => {
+    if (!selectedApp) return
+    try {
+      const res = await fetch(`/api/admin/applications/${selectedApp.id}?note_id=${noteId}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || 'فشل الحذف')
+      }
+      setSelectedNotes((prev) => prev.filter((n) => n.id !== noteId))
+      toast.success('تم حذف الملاحظة')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'فشل حذف الملاحظة')
+    }
+  }
+
+  const downloadCV = async () => {
+    if (!selectedApp || !selectedApp.cv_file_path) return
+    setCvLoading(true)
+    try {
+      const res = await fetch(`/api/admin/applications/${selectedApp.id}/cv`)
+      const data = await res.json()
+      if (!res.ok || !data.url) throw new Error(data.error || 'تعذر فتح الملف')
+      window.open(data.url, '_blank', 'noopener,noreferrer')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'فشل فتح السيرة الذاتية')
+    } finally {
+      setCvLoading(false)
     }
   }
 
@@ -279,7 +367,7 @@ export default function AdminDashboard() {
                   }}
                   onMouseEnter={() => setHoveredRow(app.id)}
                   onMouseLeave={() => setHoveredRow(null)}
-                  onClick={() => { setSelectedApp(app); setNoteText('') }}
+                  onClick={() => openApp(app)}
                 >
                   <td className="p-4" onClick={(e) => e.stopPropagation()}>
                     <input
@@ -300,9 +388,8 @@ export default function AdminDashboard() {
                   <td className="p-4"><StatusBadge status={app.status} /></td>
                   <td className="p-4">
                     <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                      {/* View */}
                       <button
-                        onClick={() => { setSelectedApp(app); setNoteText('') }}
+                        onClick={() => openApp(app)}
                         className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
                         style={{ background: 'rgba(96,165,250,0.1)', color: '#60A5FA', border: '1px solid rgba(96,165,250,0.2)' }}
                         title="عرض"
@@ -312,7 +399,6 @@ export default function AdminDashboard() {
                           <circle cx="12" cy="12" r="3" />
                         </svg>
                       </button>
-                      {/* Accept */}
                       <button
                         onClick={() => updateStatus(app.id, 'accepted')}
                         className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
@@ -323,7 +409,6 @@ export default function AdminDashboard() {
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
                       </button>
-                      {/* Reject */}
                       <button
                         onClick={() => updateStatus(app.id, 'rejected')}
                         className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
@@ -378,11 +463,10 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      {/* Detail Panel — full-height overlay from left */}
+      {/* Detail Panel */}
       <AnimatePresence>
         {selectedApp && (
           <>
-            {/* Dark overlay */}
             <motion.div
               key="overlay"
               initial={{ opacity: 0 }}
@@ -390,32 +474,30 @@ export default function AdminDashboard() {
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-40"
               style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }}
-              onClick={() => setSelectedApp(null)}
+              onClick={closeApp}
             />
 
-            {/* Panel slides in from left */}
             <motion.div
               key={selectedApp.id}
-              initial={{ x: -480, opacity: 0 }}
+              initial={{ x: -520, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -480, opacity: 0 }}
+              exit={{ x: -520, opacity: 0 }}
               transition={{ ease: 'easeOut', duration: 0.3 }}
               className="fixed top-0 left-0 bottom-0 z-50 flex flex-col overflow-hidden"
               style={{
-                width: '480px',
+                width: '520px',
                 background: 'rgba(15,15,34,0.98)',
                 backdropFilter: 'blur(20px)',
                 borderRight: '1px solid rgba(82,52,183,0.25)',
               }}
             >
-              {/* Panel header */}
               <div
                 className="flex items-center justify-between px-6 py-5 flex-shrink-0"
                 style={{ borderBottom: '1px solid rgba(82,52,183,0.2)' }}
               >
                 <h2 className="text-lg font-bold" style={{ color: '#fff' }}>تفاصيل المتقدم</h2>
                 <button
-                  onClick={() => setSelectedApp(null)}
+                  onClick={closeApp}
                   className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
                   style={{ background: 'rgba(82,52,183,0.1)', color: '#6B6490', border: '1px solid rgba(82,52,183,0.2)' }}
                 >
@@ -423,9 +505,7 @@ export default function AdminDashboard() {
                 </button>
               </div>
 
-              {/* Scrollable content */}
               <div className="flex-1 overflow-y-auto p-6">
-                {/* Info rows */}
                 <div className="space-y-3 mb-6">
                   {[
                     { label: 'الاسم', value: selectedApp.full_name },
@@ -444,17 +524,45 @@ export default function AdminDashboard() {
                   ))}
                 </div>
 
-                {selectedApp.linkedin_or_github_url && (
-                  <a
-                    href={selectedApp.linkedin_or_github_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm mb-4"
-                    style={{ color: '#60A5FA' }}
-                  >
-                    🔗 LinkedIn / GitHub
-                  </a>
-                )}
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {selectedApp.linkedin_or_github_url && (
+                    <a
+                      href={selectedApp.linkedin_or_github_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold"
+                      style={{ background: 'rgba(96,165,250,0.1)', color: '#60A5FA', border: '1px solid rgba(96,165,250,0.25)' }}
+                    >
+                      🔗 LinkedIn / GitHub
+                    </a>
+                  )}
+                  {selectedApp.portfolio_url && (
+                    <a
+                      href={selectedApp.portfolio_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold"
+                      style={{ background: 'rgba(167,139,250,0.1)', color: '#C4B5FD', border: '1px solid rgba(167,139,250,0.25)' }}
+                    >
+                      🎨 معرض الأعمال
+                    </a>
+                  )}
+                  {selectedApp.cv_file_path && (
+                    <button
+                      onClick={downloadCV}
+                      disabled={cvLoading}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all"
+                      style={{
+                        background: 'rgba(245,158,11,0.1)',
+                        color: '#F59E0B',
+                        border: '1px solid rgba(245,158,11,0.25)',
+                        opacity: cvLoading ? 0.6 : 1,
+                      }}
+                    >
+                      📄 {cvLoading ? 'جارٍ الفتح...' : 'تحميل السيرة الذاتية'}
+                    </button>
+                  )}
+                </div>
 
                 {selectedApp.bio && (
                   <div className="mb-6 p-3 rounded-xl text-sm leading-relaxed" style={{ background: 'rgba(18,18,42,0.5)', color: '#B0A8D4', border: '1px solid rgba(82,52,183,0.1)' }}>
@@ -462,13 +570,11 @@ export default function AdminDashboard() {
                   </div>
                 )}
 
-                {/* Current status */}
                 <div className="mb-5">
                   <label className="block text-sm font-semibold mb-2" style={{ color: '#B0A8D4' }}>الحالة الحالية</label>
                   <StatusBadge status={selectedApp.status} />
                 </div>
 
-                {/* Status change dropdown */}
                 <div className="mb-6">
                   <label className="block text-sm font-semibold mb-2" style={{ color: '#B0A8D4' }}>تغيير الحالة</label>
                   <select
@@ -480,20 +586,86 @@ export default function AdminDashboard() {
                   </select>
                 </div>
 
-                {/* Admin notes */}
+                {/* Status history */}
+                <div className="mb-6">
+                  <label className="block text-sm font-semibold mb-3" style={{ color: '#B0A8D4' }}>سجل تغيير الحالات</label>
+                  {detailLoading ? (
+                    <p className="text-xs" style={{ color: '#6B6490' }}>جارٍ التحميل...</p>
+                  ) : selectedHistory.length === 0 ? (
+                    <p className="text-xs" style={{ color: '#6B6490' }}>لا يوجد تغييرات بعد</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {selectedHistory.map((h) => (
+                        <div
+                          key={h.id}
+                          className="p-3 rounded-lg text-xs flex items-center justify-between"
+                          style={{ background: 'rgba(18,18,42,0.5)', border: '1px solid rgba(82,52,183,0.1)' }}
+                        >
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {h.previous_status && (
+                              <>
+                                <span style={{ color: '#6B6490' }}>{statusLabels[h.previous_status]}</span>
+                                <span style={{ color: '#4B4B6B' }}>←</span>
+                              </>
+                            )}
+                            <span style={{ color: '#fff', fontWeight: 600 }}>{statusLabels[h.new_status]}</span>
+                          </div>
+                          <span style={{ color: '#6B6490' }}>{formatDateTime(h.changed_at)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Notes list */}
+                <div className="mb-6">
+                  <label className="block text-sm font-semibold mb-3" style={{ color: '#B0A8D4' }}>
+                    الملاحظات السابقة {selectedNotes.length > 0 && `(${selectedNotes.length})`}
+                  </label>
+                  {detailLoading ? (
+                    <p className="text-xs" style={{ color: '#6B6490' }}>جارٍ التحميل...</p>
+                  ) : selectedNotes.length === 0 ? (
+                    <p className="text-xs" style={{ color: '#6B6490' }}>لا توجد ملاحظات بعد</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {selectedNotes.map((n) => (
+                        <div
+                          key={n.id}
+                          className="p-3 rounded-lg text-sm"
+                          style={{ background: 'rgba(18,18,42,0.5)', border: '1px solid rgba(82,52,183,0.1)' }}
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <span className="text-xs" style={{ color: '#6B6490' }}>{formatDateTime(n.created_at)}</span>
+                            <button
+                              onClick={() => deleteNote(n.id)}
+                              className="text-xs"
+                              style={{ color: '#F87171' }}
+                              title="حذف"
+                            >
+                              حذف
+                            </button>
+                          </div>
+                          <p style={{ color: '#fff', whiteSpace: 'pre-wrap' }}>{n.note_text}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Add note */}
                 <div>
                   <label className="block text-sm font-semibold mb-2" style={{ color: '#B0A8D4' }}>إضافة ملاحظة</label>
                   <textarea
                     value={noteText}
                     onChange={(e) => setNoteText(e.target.value)}
                     rows={3}
+                    maxLength={1000}
                     className="w-full px-3 py-2 rounded-xl text-sm"
                     placeholder="اكتب ملاحظتك هنا..."
                   />
                 </div>
               </div>
 
-              {/* Sticky bottom action buttons */}
               <div
                 className="flex-shrink-0 p-5 flex gap-3"
                 style={{ borderTop: '1px solid rgba(82,52,183,0.2)', background: 'rgba(15,15,34,0.98)' }}
@@ -507,14 +679,14 @@ export default function AdminDashboard() {
                   {savingNote ? 'جارٍ الحفظ...' : 'حفظ الملاحظة'}
                 </button>
                 <button
-                  onClick={() => { updateStatus(selectedApp.id, 'accepted') }}
+                  onClick={() => updateStatus(selectedApp.id, 'accepted')}
                   className="px-4 py-3 rounded-xl text-sm font-semibold transition-all"
                   style={{ background: 'rgba(52,211,153,0.15)', color: '#34D399', border: '1px solid rgba(52,211,153,0.3)' }}
                 >
                   قبول
                 </button>
                 <button
-                  onClick={() => { updateStatus(selectedApp.id, 'rejected') }}
+                  onClick={() => updateStatus(selectedApp.id, 'rejected')}
                   className="px-4 py-3 rounded-xl text-sm font-semibold transition-all"
                   style={{ background: 'rgba(248,113,113,0.15)', color: '#F87171', border: '1px solid rgba(248,113,113,0.3)' }}
                 >

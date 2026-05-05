@@ -1,4 +1,5 @@
-import { ETRA_LOGO_URL } from '../logo'
+import { ETRA_LOGO_SRC } from '../logo'
+import { getAppUrl } from '../app-url'
 
 function safeUrl(raw: string | undefined): string {
   if (!raw) return '#'
@@ -34,6 +35,7 @@ export function newApplicationAdminTemplate(data: {
 }): string {
   const year = new Date().getFullYear()
   const pill = specialtyPillStyle[data.specialty] ?? specialtyPillStyle.fullstack
+  const appUrl = getAppUrl()
   return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -67,7 +69,7 @@ export function newApplicationAdminTemplate(data: {
             <table width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
                 <td valign="middle">
-                  <img src="${ETRA_LOGO_URL}" alt="إترا" height="34" style="display:block;height:34px;width:auto;filter:brightness(0) invert(1);" />
+                  <img src="${ETRA_LOGO_SRC}" alt="إترا" height="34" style="display:block;height:34px;width:auto;" />
                 </td>
                 <td valign="middle" align="left">
                   <span style="display:inline-block;background-color:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.30);padding:5px 14px;border-radius:999px;font-size:12px;color:#fff;font-weight:600;letter-spacing:0.3px;">🔔 &nbsp;متقدم جديد</span>
@@ -186,7 +188,7 @@ export function newApplicationAdminTemplate(data: {
             <table width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
                 <td align="center">
-                  <a href="https://etra-creators.vercel.app/admin/applications" style="display:inline-block;background:linear-gradient(135deg,#5234B7 0%,#9E59CD 100%);color:#ffffff;text-decoration:none;padding:15px 36px;border-radius:10px;font-weight:700;font-size:14px;letter-spacing:0.3px;box-shadow:0 6px 24px rgba(82,52,183,0.40);">مراجعة الطلب في لوحة التحكم ←</a>
+                  <a href="${appUrl}/admin" style="display:inline-block;background:linear-gradient(135deg,#5234B7 0%,#9E59CD 100%);color:#ffffff;text-decoration:none;padding:15px 36px;border-radius:10px;font-weight:700;font-size:14px;letter-spacing:0.3px;box-shadow:0 6px 24px rgba(82,52,183,0.40);">مراجعة الطلب في لوحة التحكم ←</a>
                 </td>
               </tr>
             </table>

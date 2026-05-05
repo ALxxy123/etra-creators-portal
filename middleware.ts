@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({ request })
+  const response = NextResponse.next({ request })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,10 +23,14 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const isApiRoute = request.nextUrl.pathname.startsWith('/api/admin')
 
-  // Protect /admin/* routes (except /admin/login)
+  // Protect /admin/* routes (except /admin/login and /admin/reset-password)
+  const isPublicAdminPath =
+    request.nextUrl.pathname.startsWith('/admin/login') ||
+    request.nextUrl.pathname.startsWith('/admin/reset-password')
+
   if (
     request.nextUrl.pathname.startsWith('/admin') &&
-    !request.nextUrl.pathname.startsWith('/admin/login')
+    !isPublicAdminPath
   ) {
     if (!user) {
       if (isApiRoute) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

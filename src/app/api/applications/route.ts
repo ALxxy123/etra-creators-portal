@@ -2,27 +2,56 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { applicationSchema } from '@/lib/validations/application'
 import { sendApplicationReceivedEmail, sendNewApplicationAdminAlert } from '@/lib/emails/send'
+import { getPlatformSettings } from '@/lib/server/platform-settings'
+import { checkRateLimit, getClientIp, rateLimitHeaders } from '@/lib/security/rate-limit'
+import { verifyTurnstileToken } from '@/lib/security/turnstile'
 import type { CreatorApplication } from '@/types/database'
+
+const CV_PATH_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.pdf$/i
 
 export async function POST(req: NextRequest) {
   try {
-    // Check if registrations are open
-    const adminClient = createAdminClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: regSetting } = await (adminClient as any)
-      .from('platform_settings')
-      .select('value')
-      .eq('key', 'allow_registrations')
-      .single()
+    const ip = getClientIp(req)
+    const rateLimit = checkRateLimit(`applications:${ip}`, {
+      limit: 5,
+      windowMs: 15 * 60 * 1000,
+    })
 
-    if (regSetting && regSetting.value === false) {
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'تم تجاوز الحد المسموح من المحاولات. حاول لاحقاً.' },
+        { status: 429, headers: rateLimitHeaders(rateLimit) },
+      )
+    }
+
+    const adminClient = createAdminClient()
+    const settings = await getPlatformSettings(adminClient)
+
+    if (settings.allow_registrations === false) {
       return NextResponse.json({ error: 'التسجيلات مغلقة حالياً' }, { status: 403 })
     }
 
     const body = await req.json()
+    if (typeof body.company_website === 'string' && body.company_website.trim()) {
+      return NextResponse.json({ error: 'بيانات غير صالحة' }, { status: 400 })
+    }
+
+    const turnstile = await verifyTurnstileToken(body.turnstile_token, ip)
+    if (!turnstile.ok) {
+      return NextResponse.json({ error: 'تعذر التحقق الأمني. حاول مرة أخرى.' }, { status: 400 })
+    }
+
     const parsed = applicationSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json({ error: 'بيانات غير صالحة', details: parsed.error.flatten() }, { status: 400 })
+    }
+
+    const cvFilePath = typeof body.cv_file_path === 'string' && body.cv_file_path.length > 0
+      ? body.cv_file_path
+      : null
+
+    if (cvFilePath && !CV_PATH_REGEX.test(cvFilePath)) {
+      return NextResponse.json({ error: 'مسار السيرة الذاتية غير صالح' }, { status: 400 })
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -39,7 +68,7 @@ export async function POST(req: NextRequest) {
         years_of_experience: parsed.data.years_of_experience,
         linkedin_or_github_url: parsed.data.linkedin_or_github_url,
         portfolio_url: parsed.data.portfolio_url || null,
-        cv_file_path: body.cv_file_path || null,
+        cv_file_path: cvFilePath,
         bio: parsed.data.bio || null,
         criteria_acknowledged: parsed.data.criteria_acknowledged,
         terms_acknowledged: parsed.data.terms_acknowledged,
@@ -56,15 +85,16 @@ export async function POST(req: NextRequest) {
 
     const application = data as CreatorApplication
 
-    // Fire emails — don't await (non-blocking)
-    const { count } = await supabase
-      .from('creator_applications')
-      .select('*', { count: 'exact', head: true })
+    if (settings.email_notifications) {
+      const { count } = await supabase
+        .from('creator_applications')
+        .select('*', { count: 'exact', head: true })
 
-    Promise.all([
-      sendApplicationReceivedEmail(application).catch(console.error),
-      sendNewApplicationAdminAlert(application, count ?? 1).catch(console.error),
-    ])
+      void Promise.all([
+        sendApplicationReceivedEmail(application).catch(console.error),
+        sendNewApplicationAdminAlert(application, count ?? 1).catch(console.error),
+      ])
+    }
 
     return NextResponse.json({ id: application.id, tracking_code: application.tracking_code }, { status: 201 })
   } catch (err) {
