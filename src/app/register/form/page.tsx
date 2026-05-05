@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Script from 'next/script'
 import { useForm, useWatch } from 'react-hook-form'
@@ -12,8 +12,16 @@ import { cities, specialtyLabels, levelLabels, experienceLabels } from '@/lib/ut
 
 declare global {
   interface Window {
-    onEtraTurnstileSuccess?: (token: string) => void
-    onEtraTurnstileExpired?: () => void
+    turnstile?: {
+      render: (container: HTMLElement, options: {
+        sitekey: string
+        theme?: string
+        callback?: (token: string) => void
+        'expired-callback'?: () => void
+      }) => string
+      reset: (widgetId: string) => void
+      remove: (widgetId: string) => void
+    }
   }
 }
 
@@ -71,6 +79,9 @@ export default function FormPage() {
   const [dragOver, setDragOver] = useState(false)
   const [companyWebsite, setCompanyWebsite] = useState('')
   const [turnstileToken, setTurnstileToken] = useState('')
+  const turnstileWidgetId = useRef<string | null>(null)
+  const turnstileContainerRef = useRef<HTMLDivElement>(null)
+  const isSubmittingRef = useRef(false)
 
   const {
     register,
@@ -98,15 +109,29 @@ export default function FormPage() {
   const watchedSpecialty = useWatch({ control, name: 'specialty' })
   const watchedBio = useWatch({ control, name: 'bio' })
 
+  const handleTurnstileScriptLoad = useCallback(() => {
+    if (!turnstileSiteKey || !turnstileContainerRef.current || !window.turnstile) return
+    if (turnstileWidgetId.current) return
+    turnstileWidgetId.current = window.turnstile.render(turnstileContainerRef.current, {
+      sitekey: turnstileSiteKey,
+      theme: 'dark',
+      callback: (token: string) => setTurnstileToken(token),
+      'expired-callback': () => setTurnstileToken(''),
+    })
+  }, [])
+
+  const resetTurnstile = useCallback(() => {
+    if (turnstileWidgetId.current && window.turnstile) {
+      window.turnstile.reset(turnstileWidgetId.current)
+    }
+    setTurnstileToken('')
+  }, [])
+
   useEffect(() => {
-    if (!turnstileSiteKey) return
-
-    window.onEtraTurnstileSuccess = (token: string) => setTurnstileToken(token)
-    window.onEtraTurnstileExpired = () => setTurnstileToken('')
-
     return () => {
-      delete window.onEtraTurnstileSuccess
-      delete window.onEtraTurnstileExpired
+      if (turnstileWidgetId.current && window.turnstile) {
+        window.turnstile.remove(turnstileWidgetId.current)
+      }
     }
   }, [])
 
@@ -130,11 +155,13 @@ export default function FormPage() {
   }, [])
 
   const onSubmit = async (data: ApplicationFormData) => {
+    if (isSubmittingRef.current) return
     if (turnstileSiteKey && !turnstileToken) {
       toast.error('يرجى إكمال التحقق الأمني')
       return
     }
 
+    isSubmittingRef.current = true
     setSubmitting(true)
     try {
       let cvPath = ''
@@ -165,8 +192,10 @@ export default function FormPage() {
       router.push('/register/success')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'حدث خطأ أثناء إرسال الطلب')
+      resetTurnstile()
     } finally {
       setSubmitting(false)
+      isSubmittingRef.current = false
     }
   }
 
@@ -525,14 +554,12 @@ export default function FormPage() {
           </button>
           {turnstileSiteKey && (
             <>
-              <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" />
-              <div
-                className="cf-turnstile"
-                data-sitekey={turnstileSiteKey}
-                data-theme="dark"
-                data-callback="onEtraTurnstileSuccess"
-                data-expired-callback="onEtraTurnstileExpired"
+              <Script
+                src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+                strategy="afterInteractive"
+                onLoad={handleTurnstileScriptLoad}
               />
+              <div ref={turnstileContainerRef} />
             </>
           )}
           <button
