@@ -19,7 +19,7 @@ export function Navbar() {
         background: 'rgba(13,13,26,0.95)',
         backdropFilter: 'blur(16px)',
         borderBottom: '1px solid rgba(82,52,183,0.2)',
-        height: '64px',
+        height: '110px',
       }}
     >
       {/* Left: Logo */}

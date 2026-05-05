@@ -3,7 +3,7 @@ interface EtraLogoProps {
   className?: string
 }
 
-const heights: Record<string, number> = { sm: 28, md: 36, lg: 48 }
+const heights: Record<string, number> = { sm: 72, md: 110, lg: 160 }
 
 export function EtraLogo({ size = 'md', className = '' }: EtraLogoProps) {
   return (
