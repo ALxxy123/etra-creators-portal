@@ -5,12 +5,6 @@ import { motion } from 'framer-motion'
 import { Navbar } from '@/components/brand/navbar'
 import { Footer } from '@/components/brand/footer'
 
-const stats = [
-  { value: '+١٠K', label: 'مبدع مسجّل' },
-  { value: '+٥٠', label: 'شريك تقني' },
-  { value: '٩٨٪', label: 'نسبة الرضا' },
-]
-
 export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0D0D1A' }}>
@@ -114,22 +108,6 @@ export default function HomePage() {
                 </Link>
               </div>
 
-              {/* Stats */}
-              <div className="flex flex-row-reverse gap-12">
-                {stats.map((s) => (
-                  <div key={s.label}>
-                    <div
-                      className="text-2xl font-black"
-                      style={{ color: '#fff', fontFamily: 'Space Grotesk, monospace' }}
-                    >
-                      {s.value}
-                    </div>
-                    <div className="text-xs mt-1" style={{ color: '#B0A8D4' }}>
-                      {s.label}
-                    </div>
-                  </div>
-                ))}
-              </div>
             </motion.div>
 
             {/* Left column (3D card visual) */}
