@@ -93,7 +93,7 @@ export default function FormPage() {
     resolver: zodResolver(applicationSchema),
     defaultValues: {
       criteria_acknowledged: {
-        experience_3y: true,
+        experience_1y: true,
         real_projects: true,
         portfolio_5: true,
         documented: true,

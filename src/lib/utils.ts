@@ -27,6 +27,7 @@ export const levelLabels: Record<string, string> = {
 }
 
 export const experienceLabels: Record<string, string> = {
+  '1-2': '1-2 سنوات',
   '3-4': '3-4 سنوات',
   '5-7': '5-7 سنوات',
   '8-10': '8-10 سنوات',

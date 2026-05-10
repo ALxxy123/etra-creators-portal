@@ -1,5 +1,4 @@
 import { ETRA_LOGO_SRC } from '../logo'
-import { getAppUrl } from '../app-url'
 
 function safeUrl(raw: string | undefined): string {
   if (!raw) return '#'
@@ -35,7 +34,7 @@ export function newApplicationAdminTemplate(data: {
 }): string {
   const year = new Date().getFullYear()
   const pill = specialtyPillStyle[data.specialty] ?? specialtyPillStyle.fullstack
-  const appUrl = getAppUrl()
+  const dashboardUrl = process.env.ADMIN_DASHBOARD_URL?.trim().replace(/\/+$/, '') || ''
   return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -184,14 +183,14 @@ export function newApplicationAdminTemplate(data: {
               </tr>
             </table>
 
-            <!-- CTA -->
+            ${dashboardUrl ? `<!-- CTA -->
             <table width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
                 <td align="center">
-                  <a href="${appUrl}/admin" style="display:inline-block;background:linear-gradient(135deg,#5234B7 0%,#9E59CD 100%);color:#ffffff;text-decoration:none;padding:15px 36px;border-radius:10px;font-weight:700;font-size:14px;letter-spacing:0.3px;box-shadow:0 6px 24px rgba(82,52,183,0.40);">مراجعة الطلب في لوحة التحكم ←</a>
+                  <a href="${dashboardUrl}" style="display:inline-block;background:linear-gradient(135deg,#5234B7 0%,#9E59CD 100%);color:#ffffff;text-decoration:none;padding:15px 36px;border-radius:10px;font-weight:700;font-size:14px;letter-spacing:0.3px;box-shadow:0 6px 24px rgba(82,52,183,0.40);">مراجعة الطلب في لوحة التحكم ←</a>
                 </td>
               </tr>
-            </table>
+            </table>` : ''}
 
           </td>
         </tr>

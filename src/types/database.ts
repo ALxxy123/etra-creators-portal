@@ -3,12 +3,11 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type ApplicationStatus = 'new' | 'under_review' | 'accepted' | 'rejected'
 export type Specialty = 'mobile' | 'uiux' | 'frontend' | 'backend' | 'fullstack'
 export type Level = 'mid' | 'senior'
-export type YearsOfExperience = '3-4' | '5-7' | '8-10' | '10+'
-export type AdminRole = 'admin' | 'reviewer'
+export type YearsOfExperience = '1-2' | '3-4' | '5-7' | '8-10' | '10+'
 export type PlatformSettingKey = 'allow_registrations' | 'email_notifications'
 
 export interface CriteriaAcknowledged {
-  experience_3y: boolean
+  experience_1y: boolean
   real_projects: boolean
   portfolio_5: boolean
   documented: boolean
@@ -59,12 +58,6 @@ export interface ApplicationNote {
   updated_at: string
 }
 
-export interface AdminUser {
-  user_id: string
-  role: AdminRole
-  created_at: string
-}
-
 export interface PlatformSetting {
   key: PlatformSettingKey
   value: boolean
@@ -113,12 +106,6 @@ export interface Database {
         Row: ApplicationNote
         Insert: Omit<ApplicationNote, 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Pick<ApplicationNote, 'note_text'>>
-        Relationships: []
-      }
-      admin_users: {
-        Row: AdminUser
-        Insert: Omit<AdminUser, 'created_at'>
-        Update: never
         Relationships: []
       }
       platform_settings: {

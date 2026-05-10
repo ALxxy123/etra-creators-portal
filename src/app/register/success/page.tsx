@@ -272,7 +272,7 @@ export default function SuccessPage() {
                 <path d="M3 7l9 6 9-6" stroke="#9E59CD" strokeWidth="1.6" strokeLinecap="round" />
               </svg>
               <span className="text-xs font-semibold" style={{ color: '#B0A8D4', fontFamily: 'Space Grotesk' }} dir="ltr">
-                support@etra.sa
+                etrahub@gmail.com
               </span>
             </div>
             <div
@@ -283,7 +283,7 @@ export default function SuccessPage() {
                 <path d="M5 4h3l2 5-2 1a11 11 0 0 0 6 6l1-2 5 2v3a2 2 0 0 1-2 2A17 17 0 0 1 3 6a2 2 0 0 1 2-2Z" stroke="#9E59CD" strokeWidth="1.6" strokeLinejoin="round" />
               </svg>
               <span className="text-xs font-semibold" style={{ color: '#B0A8D4', fontFamily: 'Space Grotesk' }} dir="ltr">
-                +966 11 123 4567
+                +966 55 145 9985
               </span>
             </div>
           </div>

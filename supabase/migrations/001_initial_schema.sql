@@ -43,7 +43,7 @@ create table if not exists public.creator_applications (
   city text not null,
   specialty text not null check (specialty in ('mobile', 'uiux', 'frontend', 'backend', 'fullstack')),
   level text not null check (level in ('mid', 'senior')),
-  years_of_experience text not null check (years_of_experience in ('3-4', '5-7', '8-10', '10+')),
+  years_of_experience text not null check (years_of_experience in ('1-2', '3-4', '5-7', '8-10', '10+')),
   linkedin_or_github_url text not null,
   portfolio_url text,
   cv_file_path text,
