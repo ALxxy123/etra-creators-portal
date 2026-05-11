@@ -114,11 +114,11 @@ export default function SuccessPage() {
         className="text-center mb-2"
       >
         <h1 className="text-3xl md:text-4xl font-black mb-3" style={{ color: '#fff' }}>
-          تم إرسال طلبك بنجاح
+          تم استلام طلبك بنجاح
         </h1>
-        <p className="text-sm max-w-xl mx-auto" style={{ color: '#B0A8D4' }}>
-          {applicantName ? `شكراً لك ${applicantName}. ` : ''}
-          لقد استلمنا ملفك وسيقوم فريق إترا بمراجعته والتواصل معك قريباً عبر بريدك الإلكتروني.
+        <p className="text-sm max-w-xl mx-auto leading-relaxed" style={{ color: '#B0A8D4' }}>
+          {applicantName ? `${applicantName}، ` : ''}
+          شكرًا لاهتمامك بالانضمام إلى مبدعين إترا. سيقوم فريقنا بمراجعة بياناتك، أعمالك السابقة، وتوافق مهاراتك مع احتياجات المشاريع القادمة. يمكنك متابعة حالة طلبك من خلال صفحة تتبع الطلب.
         </p>
       </motion.div>
 

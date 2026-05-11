@@ -221,6 +221,36 @@ export default function TermsPage() {
             </p>
           </div>
 
+          <div
+            className="mb-10 rounded-2xl p-6"
+            style={{
+              background: 'linear-gradient(135deg, rgba(245,158,11,0.08) 0%, rgba(82,52,183,0.08) 100%)',
+              border: '1px solid rgba(245,158,11,0.35)',
+              borderRight: '3px solid #F59E0B',
+            }}
+          >
+            <div className="flex items-start gap-3 flex-row-reverse">
+              <div
+                className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.35)' }}
+              >
+                <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
+                  <path d="M7 1L13 12H1L7 1Z" stroke="#F59E0B" strokeWidth="1.5" strokeLinejoin="round" />
+                  <path d="M7 6V8" stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round" />
+                  <circle cx="7" cy="10" r="0.6" fill="#F59E0B" />
+                </svg>
+              </div>
+              <div className="text-right flex-1">
+                <h3 className="text-sm font-bold mb-1.5" style={{ color: '#F59E0B' }}>
+                  تنبيه: بنود قيد المراجعة القانونية النهائية
+                </h3>
+                <p className="text-sm leading-relaxed" style={{ color: '#B0A8D4' }}>
+                  بعض البنود المتعلقة بحماية العلاقة التجارية، مثل عدم التواصل المباشر مع عملاء إترا خارج إطار الاتفاق، يجب أن تكون واضحة ومتوازنة، وتخضع للمراجعة القانونية المناسبة قبل الإطلاق الرسمي العام.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-8">
             {sections.map((section) => (
               <section
