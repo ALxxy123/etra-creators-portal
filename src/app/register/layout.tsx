@@ -5,8 +5,9 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import Image from 'next/image'
 
 export const metadata: Metadata = {
-  title: 'طلب الانضمام | بوابة مبدعي إترا',
-  description: 'انضم إلى شبكة مبدعي إترا — التسويق والعقود والعملاء علينا.',
+  title: 'طلب الانضمام | مبدعين إترا',
+  description:
+    'بوابة الانضمام إلى شبكة مبدعين إترا التقنية: مشاريع حقيقية تحت إدارة إترا، عقود رسمية، ونموذج توزيع أرباح واضح.',
 }
 
 async function getRegistrationsOpen(): Promise<boolean> {

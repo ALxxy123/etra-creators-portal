@@ -14,10 +14,17 @@ export function Footer() {
         <EtraLogo size="sm" className="items-center" />
         <p
           className="text-xs leading-relaxed text-center max-w-2xl"
+<<<<<<< HEAD
           style={{ color: '#8077A8' }}
         >
           <span className="font-bold" style={{ color: '#9E59CD' }}>مبدعين إترا: </span>
           شبكة تنفيذ تقنية احترافية تحت إدارة إترا، تجمع أصحاب المهارة بالمشاريع الحقيقية ضمن نموذج واضح للحقوق، المسؤوليات، وتوزيع الأرباح.
+=======
+          style={{ color: '#8B82B8' }}
+        >
+          <span style={{ color: '#B0A8D4', fontWeight: 700 }}>مبدعين إترا:</span>
+          {' '}شبكة تنفيذ تقنية احترافية تحت إدارة إترا، تجمع أصحاب المهارة بالمشاريع الحقيقية ضمن نموذج واضح للحقوق، المسؤوليات، وتوزيع الأرباح.
+>>>>>>> 9fe6f65c6d908bbd1299d5d2142d6d2fff7b226b
         </p>
         <div className="flex gap-6 text-xs">
           <Link href="/privacy" className={linkClass} style={linkStyle}>
