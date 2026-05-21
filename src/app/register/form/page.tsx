@@ -47,20 +47,6 @@ const specialtyIcons: Record<string, React.ReactNode> = {
       <rect x="13" y="13" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
     </svg>
   ),
-  frontend: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M8 10l-3 2 3 2M16 10l3 2-3 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M12 8l-2 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  ),
-  backend: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <ellipse cx="12" cy="6" rx="8" ry="3" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" stroke="currentColor" strokeWidth="1.6" />
-    </svg>
-  ),
   fullstack: (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
       <rect x="2" y="3" width="20" height="13" rx="2" stroke="currentColor" strokeWidth="1.6" />
@@ -385,7 +371,7 @@ export default function FormPage() {
                 <motion.button
                   type="button"
                   key={val}
-                  onClick={() => setValue('specialty', val as 'mobile' | 'uiux' | 'frontend' | 'backend' | 'fullstack')}
+                  onClick={() => setValue('specialty', val as 'mobile' | 'uiux' | 'fullstack')}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="p-4 rounded-xl text-center transition-all flex flex-col items-center gap-2"

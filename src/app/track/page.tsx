@@ -28,7 +28,7 @@ const statusConfig: Record<ApplicationStatus, { icon: string; color: string; bg:
     color: '#60A5FA',
     bg: 'rgba(96,165,250,0.1)',
     border: 'rgba(96,165,250,0.3)',
-    message: 'يتم الآن مراجعة طلبك من قِبل فريق إترا.',
+    message: 'طلبك قيد المراجعة. نراجع حالياً بياناتك وأعمالك السابقة بعناية للتأكد من توافقها مع معايير شبكة إترا التقنية. سيتم تحديث حالة الطلب عند اكتمال المراجعة.',
   },
   accepted: {
     icon: '✅',

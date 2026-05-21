@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ProgressBar } from '@/components/registration/progress-bar'
+import { CONTRACT_ARTICLES, CONTRACT_VERSION } from '@/lib/contract'
 
 type ProjectTab = 'web' | 'mobile' | 'uiux'
 
@@ -294,6 +295,116 @@ export default function TermsPage() {
         </motion.div>
       </div>
 
+      {/* Binding contract articles — the legally binding clauses */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.08 }}
+        className="rounded-2xl p-6 mb-4"
+        style={{
+          background: 'linear-gradient(135deg, rgba(26,26,53,0.92) 0%, rgba(18,18,42,0.95) 100%)',
+          border: '1px solid rgba(158,89,205,0.35)',
+          boxShadow: '0 0 30px rgba(82,52,183,0.15)',
+        }}
+      >
+        <div className="flex items-center gap-3 mb-5">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #5234B7 0%, #9E59CD 100%)' }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M9 12l2 2 4-4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4Z" stroke="#fff" strokeWidth="1.6" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <div className="text-right flex-1">
+            <h3 className="font-bold text-base" style={{ color: '#fff' }}>بنود العقد الملزِمة</h3>
+            <p className="text-xs mt-0.5" style={{ color: '#9E59CD' }}>
+              قراءتك للبنود التالية ثم الموافقة عليها تُنشئ عقداً نافذاً بينك وبين إترا
+            </p>
+          </div>
+          <span
+            className="text-[10px] font-bold px-2.5 py-1 rounded-full"
+            style={{
+              background: 'rgba(158,89,205,0.15)',
+              border: '1px solid rgba(158,89,205,0.4)',
+              color: '#9E59CD',
+              fontFamily: 'Space Grotesk',
+              letterSpacing: '0.5px',
+            }}
+            dir="ltr"
+          >
+            {CONTRACT_VERSION}
+          </span>
+        </div>
+
+        {/* Pre-launch legal review notice */}
+        <div
+          className="rounded-xl p-3.5 mb-4 flex items-start gap-3"
+          style={{
+            background: 'rgba(245,158,11,0.08)',
+            border: '1px solid rgba(245,158,11,0.28)',
+            borderRight: '3px solid #F59E0B',
+          }}
+        >
+          <div
+            className="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center"
+            style={{ background: 'rgba(245,158,11,0.18)' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="#F59E0B" strokeWidth="1.7" />
+              <path d="M12 7v6M12 16v.5" stroke="#F59E0B" strokeWidth="1.7" strokeLinecap="round" />
+            </svg>
+          </div>
+          <p className="text-xs leading-relaxed text-right flex-1" style={{ color: '#FCD34D' }}>
+            <span className="font-bold" style={{ color: '#F59E0B' }}>تنبيه: </span>
+            بعض البنود المتعلقة بحماية العلاقة التجارية، مثل عدم التواصل المباشر مع عملاء إترا خارج إطار الاتفاق، يجب أن تكون واضحة ومتوازنة، وتخضع للمراجعة القانونية المناسبة قبل الإطلاق الرسمي العام.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          {CONTRACT_ARTICLES.map((article) => (
+            <motion.div
+              key={article.number}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 + parseInt(article.number) * 0.05 }}
+              className="p-4 rounded-xl"
+              style={{
+                background: 'rgba(13,13,26,0.5)',
+                border: '1px solid rgba(82,52,183,0.2)',
+                borderRight: '3px solid #9E59CD',
+              }}
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className="flex-shrink-0 flex items-center justify-center font-black text-xs"
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '8px',
+                    background: 'rgba(158,89,205,0.18)',
+                    border: '1px solid rgba(158,89,205,0.4)',
+                    color: '#9E59CD',
+                    fontFamily: 'Space Grotesk',
+                  }}
+                >
+                  {article.number}
+                </div>
+                <div className="flex-1 text-right">
+                  <h4 className="font-bold text-sm mb-1.5" style={{ color: '#fff' }}>
+                    البند ({article.number}) — {article.title}
+                  </h4>
+                  <p className="text-xs leading-relaxed" style={{ color: '#B0A8D4' }}>
+                    {article.body}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
       {/* Info cards grid */}
       <div className="grid md:grid-cols-2 gap-4 mb-6">
         {infoCards.map((card, i) => (
@@ -353,10 +464,10 @@ export default function TermsPage() {
         </div>
         <div className="flex-1 text-right">
           <p className="font-bold text-sm" style={{ color: '#fff' }}>
-            أقرّ بأنني قرأت جميع بنود العمل وأوافق عليها
+            أوافق على جميع البنود وأُقرّ بأنها تُمثّل عقدي الملزم مع إترا
           </p>
-          <p className="text-xs mt-1" style={{ color: '#6B6490' }}>
-            موافقتك تُعدّ إقراراً قانونياً بالالتزام ببنود الشراكة مع إترا.
+          <p className="text-xs mt-1 leading-relaxed" style={{ color: '#6B6490' }}>
+            بضغطك على المتابعة فإنك تُنشئ عقداً نافذاً بينك وبين إترا للتمكين التقني، ويُسجَّل وقت الموافقة وعنوان IP الخاص بك كدليل قانوني، ويُحفظ إصدار البنود ({CONTRACT_VERSION}) كاملاً ضمن سجلاتنا.
           </p>
         </div>
       </motion.div>

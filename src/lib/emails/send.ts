@@ -2,8 +2,11 @@ import { transporter } from './transporter'
 import { applicationReceivedTemplate } from './templates/application-received'
 import { applicationAcceptedTemplate } from './templates/application-accepted'
 import { newApplicationAdminTemplate } from './templates/new-application-admin'
+import { contractCopyTemplate } from './templates/contract-copy'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { etraLogoAttachment } from './logo'
+import { CONTRACT_ARTICLES, CONTRACT_VERSION } from '@/lib/contract'
+import type { ContractSnapshot } from '@/types/database'
 
 const GMAIL_USER = process.env.GMAIL_USER!
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'etrahub@gmail.com'
@@ -11,8 +14,6 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'etrahub@gmail.com'
 const specialtyLabels: Record<string, string> = {
   mobile: 'تطبيقات الجوال',
   uiux: 'تصميم UI/UX',
-  frontend: 'تطوير الواجهات الأمامية',
-  backend: 'تطوير الخوادم والـ Backend',
   fullstack: 'تطوير Full Stack',
 }
 
@@ -107,6 +108,61 @@ export async function sendApplicationAcceptedEmail(application: {
     await logEmailNotification({
       applicationId: application.id,
       type: 'application_accepted',
+      recipientEmail: application.email,
+      recipientName: application.full_name,
+      status: 'failed',
+      errorMessage: String(error),
+    })
+    throw error
+  }
+}
+
+// ─── EMAIL: Signed contract copy to applicant ───────────────────────────────
+export async function sendContractCopyEmail(application: {
+  id: string
+  full_name: string
+  email: string
+  tracking_code: string
+  contract_version: string | null
+  contract_accepted_at: string | null
+  contract_acceptance_ip: string | null
+  contract_snapshot: ContractSnapshot | null
+}) {
+  const version = application.contract_version ?? CONTRACT_VERSION
+  const acceptedAtIso = application.contract_accepted_at ?? new Date().toISOString()
+  const acceptedAt = new Date(acceptedAtIso).toLocaleString('ar-SA', {
+    year: 'numeric', month: 'long', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  })
+  const articles = application.contract_snapshot?.articles ?? CONTRACT_ARTICLES
+
+  try {
+    await transporter.sendMail({
+      from: `"إترا للتمكين التقني" <${GMAIL_USER}>`,
+      to: application.email,
+      subject: `📄 نسخة عقدك مع إترا — ${application.tracking_code}`,
+      attachments: [etraLogoAttachment],
+      html: contractCopyTemplate({
+        applicantName: application.full_name,
+        trackingCode: application.tracking_code,
+        contractVersion: version,
+        acceptedAt,
+        acceptanceIp: application.contract_acceptance_ip,
+        articles,
+      }),
+    })
+
+    await logEmailNotification({
+      applicationId: application.id,
+      type: 'contract_copy',
+      recipientEmail: application.email,
+      recipientName: application.full_name,
+      status: 'sent',
+    })
+  } catch (error) {
+    await logEmailNotification({
+      applicationId: application.id,
+      type: 'contract_copy',
       recipientEmail: application.email,
       recipientName: application.full_name,
       status: 'failed',

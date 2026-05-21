@@ -12,6 +12,13 @@ export function Footer() {
     <footer className="mt-16 pb-8 px-6">
       <div className="flex flex-col items-center gap-3">
         <EtraLogo size="sm" className="items-center" />
+        <p
+          className="text-xs leading-relaxed text-center max-w-2xl"
+          style={{ color: '#8077A8' }}
+        >
+          <span className="font-bold" style={{ color: '#9E59CD' }}>مبدعين إترا: </span>
+          شبكة تنفيذ تقنية احترافية تحت إدارة إترا، تجمع أصحاب المهارة بالمشاريع الحقيقية ضمن نموذج واضح للحقوق، المسؤوليات، وتوزيع الأرباح.
+        </p>
         <div className="flex gap-6 text-xs">
           <Link href="/privacy" className={linkClass} style={linkStyle}>
             سياسة الخصوصية

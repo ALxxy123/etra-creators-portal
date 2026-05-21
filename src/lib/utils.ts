@@ -16,8 +16,6 @@ export function formatDate(dateStr: string) {
 export const specialtyLabels: Record<string, string> = {
   mobile: 'تطبيقات الجوال',
   uiux: 'تصميم UI/UX',
-  frontend: 'تطوير الواجهات الأمامية',
-  backend: 'تطوير الخوادم والـ Backend',
   fullstack: 'تطوير Full Stack',
 }
 

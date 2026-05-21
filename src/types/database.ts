@@ -1,7 +1,7 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type ApplicationStatus = 'new' | 'under_review' | 'accepted' | 'rejected'
-export type Specialty = 'mobile' | 'uiux' | 'frontend' | 'backend' | 'fullstack'
+export type Specialty = 'mobile' | 'uiux' | 'fullstack'
 export type Level = 'mid' | 'senior'
 export type YearsOfExperience = '1-2' | '3-4' | '5-7' | '8-10' | '10+'
 export type PlatformSettingKey = 'allow_registrations' | 'email_notifications'
@@ -34,9 +34,27 @@ export interface CreatorApplication {
   criteria_acknowledged: CriteriaAcknowledged
   terms_acknowledged: boolean
   terms_acknowledged_at: string | null
+  contract_version: string | null
+  contract_accepted_at: string | null
+  contract_acceptance_ip: string | null
+  contract_acceptance_user_agent: string | null
+  contract_snapshot: ContractSnapshot | null
+  contract_sent_at: string | null
   status: ApplicationStatus
   created_at: string
   updated_at: string
+}
+
+export interface ContractSnapshotArticle {
+  number: string
+  title: string
+  body: string
+}
+
+export interface ContractSnapshot {
+  version: string
+  accepted_at: string
+  articles: ContractSnapshotArticle[]
 }
 
 export interface ApplicationStatusHistory {

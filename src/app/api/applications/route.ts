@@ -5,6 +5,7 @@ import { sendApplicationReceivedEmail, sendNewApplicationAdminAlert } from '@/li
 import { getPlatformSettings } from '@/lib/server/platform-settings'
 import { checkRateLimit, getClientIp, rateLimitHeaders } from '@/lib/security/rate-limit'
 import { verifyTurnstileToken } from '@/lib/security/turnstile'
+import { CONTRACT_ARTICLES, CONTRACT_VERSION } from '@/lib/contract'
 import type { CreatorApplication } from '@/types/database'
 
 const CV_PATH_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.pdf$/i
@@ -54,6 +55,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'مسار السيرة الذاتية غير صالح' }, { status: 400 })
     }
 
+    const acceptedAt = new Date().toISOString()
+    const userAgent = req.headers.get('user-agent')?.slice(0, 500) ?? null
+    const contractSnapshot = {
+      version: CONTRACT_VERSION,
+      accepted_at: acceptedAt,
+      articles: CONTRACT_ARTICLES,
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const supabase = adminClient as any
     const { data, error } = await supabase
@@ -72,7 +81,12 @@ export async function POST(req: NextRequest) {
         bio: parsed.data.bio || null,
         criteria_acknowledged: parsed.data.criteria_acknowledged,
         terms_acknowledged: parsed.data.terms_acknowledged,
-        terms_acknowledged_at: new Date().toISOString(),
+        terms_acknowledged_at: acceptedAt,
+        contract_version: CONTRACT_VERSION,
+        contract_accepted_at: acceptedAt,
+        contract_acceptance_ip: ip,
+        contract_acceptance_user_agent: userAgent,
+        contract_snapshot: contractSnapshot,
         status: 'new',
       })
       .select('*')

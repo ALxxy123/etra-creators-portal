@@ -5,7 +5,7 @@ export const applicationSchema = z.object({
   email: z.string().email('البريد الإلكتروني غير صحيح'),
   phone: z.string().regex(/^05\d{8}$/, 'رقم الجوال يجب أن يبدأ بـ 05 ويتكون من 10 أرقام'),
   city: z.string().min(2, 'يرجى اختيار المدينة').max(50),
-  specialty: z.enum(['mobile', 'uiux', 'frontend', 'backend', 'fullstack'] as const),
+  specialty: z.enum(['mobile', 'uiux', 'fullstack'] as const),
   level: z.enum(['mid', 'senior'] as const),
   years_of_experience: z.enum(['1-2', '3-4', '5-7', '8-10', '10+'] as const),
   linkedin_or_github_url: z.string().url('يرجى إدخال رابط صحيح'),

@@ -10,8 +10,6 @@ type CriterionId = 'experience' | 'portfolio' | 'specialties' | 'commitment'
 const specialties = [
   { id: 'mobile', label: 'تطبيقات الجوال' },
   { id: 'uiux', label: 'تصميم UI/UX' },
-  { id: 'frontend', label: 'تطوير الواجهات الأمامية' },
-  { id: 'backend', label: 'تطوير الخوادم والـ Backend' },
   { id: 'fullstack', label: 'تطوير Full Stack' },
 ]
 

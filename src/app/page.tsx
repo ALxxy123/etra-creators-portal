@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Navbar } from '@/components/brand/navbar'
 import { Footer } from '@/components/brand/footer'
+import { HomeSections } from '@/components/brand/home-sections'
 
 export default function HomePage() {
   return (
@@ -54,11 +55,11 @@ export default function HomePage() {
                 }}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                المستقبل التقني يبدأ هنا
+                بوابة مبدعين إترا
               </div>
 
               <h1 className="text-5xl md:text-6xl font-black leading-tight mb-6">
-                <span style={{ color: '#fff' }}>ارتق بمسيرتك مع</span>
+                <span style={{ color: '#fff' }}>انضم إلى</span>
                 <br />
                 <span
                   style={{
@@ -68,12 +69,16 @@ export default function HomePage() {
                     backgroundClip: 'text',
                   }}
                 >
-                  إترا للتمكين التقني
+                  شبكة إترا التقنية
                 </span>
               </h1>
 
-              <p className="text-base md:text-lg leading-relaxed mb-8" style={{ color: '#B0A8D4', maxWidth: '500px' }}>
-                بوابة المبدعين هي مساحتك للانطلاق. انضم إلى نخبة من المتخصصين في عالم التقنية، وابنِ مستقبلك المهني في بيئة تدعم الابتكار والتميز.
+              <p className="text-base md:text-lg leading-relaxed mb-5" style={{ color: '#B0A8D4', maxWidth: '540px' }}>
+                مبدعين إترا هي شبكة تنفيذ تقنية احترافية تجمع المطورين والمصممين وصنّاع المنتجات للعمل على مشاريع حقيقية تحت إدارة إترا، بمنهجية واضحة، عقود رسمية، وتوزيع أرباح عادل.
+              </p>
+
+              <p className="text-sm leading-relaxed mb-8" style={{ color: '#6B6490', maxWidth: '540px' }}>
+                لسنا بوابة توظيف تقليدية، ولا برنامجاً تدريبياً. نحن نبني شبكة من المبدعين المستقلين القادرين على تنفيذ مشاريع تقنية بجودة عالية، ضمن منظومة احترافية تحفظ الحقوق وتوضح المسؤوليات.
               </p>
 
               <div className="flex items-center gap-4 mb-14">
@@ -85,7 +90,7 @@ export default function HomePage() {
                     boxShadow: '0 0 32px rgba(82,52,183,0.4)',
                   }}
                 >
-                  ابدأ رحلتك الآن
+                  ابدأ طلب الانضمام
                 </Link>
                 <Link
                   href="/track"
@@ -246,6 +251,7 @@ export default function HomePage() {
             </motion.div>
           </div>
         </div>
+        <HomeSections />
       </main>
 
       <Footer />
