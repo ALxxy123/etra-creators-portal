@@ -1,6 +1,7 @@
 import { transporter } from './transporter'
 import { applicationReceivedTemplate } from './templates/application-received'
 import { applicationAcceptedTemplate } from './templates/application-accepted'
+import { applicationRejectedTemplate } from './templates/application-rejected'
 import { newApplicationAdminTemplate } from './templates/new-application-admin'
 import { contractCopyTemplate } from './templates/contract-copy'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -108,6 +109,54 @@ export async function sendApplicationAcceptedEmail(application: {
     await logEmailNotification({
       applicationId: application.id,
       type: 'application_accepted',
+      recipientEmail: application.email,
+      recipientName: application.full_name,
+      status: 'failed',
+      errorMessage: String(error),
+    })
+    throw error
+  }
+}
+
+// ─── EMAIL: To applicant when rejected ──────────────────────────────────────
+export async function sendApplicationRejectedEmail(
+  application: {
+    id: string
+    full_name: string
+    email: string
+    tracking_code: string
+    specialty: string
+    level: string
+  },
+  reason: string | null
+) {
+  try {
+    await transporter.sendMail({
+      from: `"إترا للتمكين التقني" <${GMAIL_USER}>`,
+      to: application.email,
+      subject: `تحديث بخصوص طلبك في إترا — ${application.tracking_code}`,
+      attachments: [etraLogoAttachment],
+      html: applicationRejectedTemplate({
+        applicantName: application.full_name,
+        trackingCode: application.tracking_code,
+        specialty: specialtyLabels[application.specialty] || application.specialty,
+        level: levelLabels[application.level] || application.level,
+        reason: reason && reason.trim().length > 0 ? reason.trim() : null,
+      }),
+    })
+
+    await logEmailNotification({
+      applicationId: application.id,
+      type: 'application_rejected',
+      recipientEmail: application.email,
+      recipientName: application.full_name,
+      status: 'sent',
+    })
+
+  } catch (error) {
+    await logEmailNotification({
+      applicationId: application.id,
+      type: 'application_rejected',
       recipientEmail: application.email,
       recipientName: application.full_name,
       status: 'failed',
