@@ -14,6 +14,7 @@ export function formatDate(dateStr: string) {
 }
 
 export const specialtyLabels: Record<string, string> = {
+  web: 'تطوير الويب',
   mobile: 'تطبيقات الجوال',
   uiux: 'تصميم UI/UX',
   fullstack: 'تطوير Full Stack',

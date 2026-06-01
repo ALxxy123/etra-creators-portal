@@ -4,6 +4,7 @@ import { applicationAcceptedTemplate } from './templates/application-accepted'
 import { applicationRejectedTemplate } from './templates/application-rejected'
 import { newApplicationAdminTemplate } from './templates/new-application-admin'
 import { contractCopyTemplate } from './templates/contract-copy'
+import { taskAssignedTemplate } from './templates/task-assigned'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { etraLogoAttachment } from './logo'
 import { CONTRACT_ARTICLES, CONTRACT_VERSION } from '@/lib/contract'
@@ -13,6 +14,7 @@ const GMAIL_USER = process.env.GMAIL_USER!
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'etrahub@gmail.com'
 
 const specialtyLabels: Record<string, string> = {
+  web: 'تطوير الويب',
   mobile: 'تطبيقات الجوال',
   uiux: 'تصميم UI/UX',
   fullstack: 'تطوير Full Stack',
@@ -21,6 +23,26 @@ const specialtyLabels: Record<string, string> = {
 const levelLabels: Record<string, string> = {
   mid: 'Mid — متوسط',
   senior: 'Senior — متقدم',
+}
+
+type TaskRequirement = { order?: number; text: string }
+type TaskDeliverable = { icon?: string; text: string }
+type TaskEvaluationCriterion = { percentage: number; label: string }
+
+function formatTaskDeadline(dateStr: string) {
+  return new Date(dateStr).toLocaleString('ar-SA', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Riyadh',
+  })
+}
+
+function orderedRequirements(items: TaskRequirement[]) {
+  return [...items].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 }
 
 // ─── EMAIL 1: To applicant after registration ───────────────────────────────
@@ -157,6 +179,81 @@ export async function sendApplicationRejectedEmail(
     await logEmailNotification({
       applicationId: application.id,
       type: 'application_rejected',
+      recipientEmail: application.email,
+      recipientName: application.full_name,
+      status: 'failed',
+      errorMessage: String(error),
+    })
+    throw error
+  }
+}
+
+// ─── EMAIL: Assessment task assigned to applicant ──────────────────────────
+export async function sendTaskAssignedEmail(
+  application: {
+    id: string
+    full_name: string
+    email: string
+    tracking_code: string
+    specialty: string
+    level: string
+  },
+  task: {
+    title: string
+    title_ar: string
+    subtitle_ar: string | null
+    context_ar: string
+    requirements_mid: TaskRequirement[]
+    requirements_senior: TaskRequirement[]
+    deliverables: TaskDeliverable[]
+    evaluation_criteria: TaskEvaluationCriterion[]
+  },
+  assignment: {
+    deadline_hours: number
+    deadline_at: string
+  }
+) {
+  const requirements = application.level === 'senior'
+    ? [
+        ...orderedRequirements(task.requirements_mid),
+        ...orderedRequirements(task.requirements_senior),
+      ]
+    : orderedRequirements(task.requirements_mid)
+
+  try {
+    await transporter.sendMail({
+      from: `"إترا للتمكين التقني" <${GMAIL_USER}>`,
+      to: application.email,
+      subject: `مهمة التقييم الخاصة بك في إترا — ${application.tracking_code}`,
+      attachments: [etraLogoAttachment],
+      html: taskAssignedTemplate({
+        applicantName: application.full_name,
+        trackingCode: application.tracking_code,
+        specialty: specialtyLabels[application.specialty] || application.specialty,
+        level: levelLabels[application.level] || application.level,
+        taskTitle: task.title_ar,
+        taskTitleEn: task.title,
+        taskSubtitle: task.subtitle_ar,
+        taskContext: task.context_ar,
+        deadlineHours: assignment.deadline_hours,
+        deadlineAt: formatTaskDeadline(assignment.deadline_at),
+        requirements,
+        deliverables: task.deliverables,
+        evaluationCriteria: task.evaluation_criteria,
+      }),
+    })
+
+    await logEmailNotification({
+      applicationId: application.id,
+      type: 'task_assigned',
+      recipientEmail: application.email,
+      recipientName: application.full_name,
+      status: 'sent',
+    })
+  } catch (error) {
+    await logEmailNotification({
+      applicationId: application.id,
+      type: 'task_assigned',
       recipientEmail: application.email,
       recipientName: application.full_name,
       status: 'failed',

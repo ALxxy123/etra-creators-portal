@@ -1,7 +1,7 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type ApplicationStatus = 'new' | 'under_review' | 'accepted' | 'rejected'
-export type Specialty = 'mobile' | 'uiux' | 'fullstack'
+export type Specialty = 'web' | 'mobile' | 'uiux' | 'fullstack'
 export type Level = 'mid' | 'senior'
 export type YearsOfExperience = '1-2' | '3-4' | '5-7' | '8-10' | '10+'
 export type PlatformSettingKey = 'allow_registrations' | 'email_notifications'
@@ -102,6 +102,59 @@ export interface EmailNotification {
   created_at: string
 }
 
+export type SubmissionStatus = 'pending' | 'submitted' | 'late' | 'reviewed'
+export type DeadlineHours = 24 | 48 | 72
+
+export interface TaskRequirement {
+  order: number
+  text: string
+}
+
+export interface TaskDeliverable {
+  icon: string
+  text: string
+}
+
+export interface TaskEvaluationCriterion {
+  percentage: number
+  label: string
+}
+
+export interface AssessmentTask {
+  id: string
+  specialty: Specialty
+  title: string
+  title_ar: string
+  subtitle: string | null
+  subtitle_ar: string | null
+  context_ar: string
+  requirements_mid: TaskRequirement[]
+  requirements_senior: TaskRequirement[]
+  deliverables: TaskDeliverable[]
+  evaluation_criteria: TaskEvaluationCriterion[]
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface ApplicationTask {
+  id: string
+  application_id: string
+  task_id: string
+  sent_by: string | null
+  deadline_hours: DeadlineHours
+  deadline_at: string
+  submission_link: string | null
+  submission_notes: string | null
+  submission_status: SubmissionStatus
+  submitted_at: string | null
+  admin_score: number | null
+  admin_feedback: string | null
+  sent_at: string
+  created_at: string
+  updated_at: string
+}
+
 export interface Database {
   __InternalSupabase: {
     PostgrestVersion: '12'
@@ -136,6 +189,29 @@ export interface Database {
         Row: EmailNotification
         Insert: Omit<EmailNotification, 'id' | 'created_at'>
         Update: Partial<Pick<EmailNotification, 'status' | 'error_message'>>
+        Relationships: []
+      }
+      assessment_tasks: {
+        Row: AssessmentTask
+        Insert: Omit<AssessmentTask, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<AssessmentTask, 'id' | 'created_at'>>
+        Relationships: []
+      }
+      application_tasks: {
+        Row: ApplicationTask
+        Insert: Omit<ApplicationTask, 'id' | 'sent_at' | 'created_at' | 'updated_at'> & { sent_at?: string }
+        Update: Partial<
+          Pick<
+            ApplicationTask,
+            | 'submission_link'
+            | 'submission_notes'
+            | 'submission_status'
+            | 'submitted_at'
+            | 'admin_score'
+            | 'admin_feedback'
+            | 'updated_at'
+          >
+        >
         Relationships: []
       }
     }

@@ -121,7 +121,7 @@ export default function FormPage() {
     }
   }, [])
 
-  const handleFile = (file: File) => {
+  const handleFile = useCallback((file: File) => {
     if (file.type !== 'application/pdf') {
       toast.error('يُقبل فقط ملفات PDF')
       return
@@ -131,16 +131,16 @@ export default function FormPage() {
       return
     }
     setCvFile(file)
-  }
+  }, [])
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setDragOver(false)
     const file = e.dataTransfer.files[0]
     if (file) handleFile(file)
-  }, [])
+  }, [handleFile])
 
-  const onSubmit = async (data: ApplicationFormData) => {
+  const onSubmit = useCallback(async (data: ApplicationFormData) => {
     if (isSubmittingRef.current) return
     if (turnstileSiteKey && !turnstileToken) {
       toast.error('يرجى إكمال التحقق الأمني')
@@ -183,7 +183,14 @@ export default function FormPage() {
       setSubmitting(false)
       isSubmittingRef.current = false
     }
-  }
+  }, [companyWebsite, cvFile, resetTurnstile, router, turnstileToken])
+
+  const onFormSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      void handleSubmit(onSubmit)(event)
+    },
+    [handleSubmit, onSubmit]
+  )
 
   const inputClass = 'w-full px-4 py-3 rounded-xl text-sm'
   const labelClass = 'block text-xs font-semibold mb-2'
@@ -276,7 +283,7 @@ export default function FormPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={onFormSubmit} className="space-y-5">
         <input
           type="text"
           value={companyWebsite}
