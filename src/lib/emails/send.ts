@@ -5,6 +5,7 @@ import { applicationRejectedTemplate } from './templates/application-rejected'
 import { newApplicationAdminTemplate } from './templates/new-application-admin'
 import { contractCopyTemplate } from './templates/contract-copy'
 import { taskAssignedTemplate } from './templates/task-assigned'
+import { taskReminderTemplate } from './templates/task-reminder'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { etraLogoAttachment } from './logo'
 import { CONTRACT_ARTICLES, CONTRACT_VERSION } from '@/lib/contract'
@@ -263,6 +264,61 @@ export async function sendTaskAssignedEmail(
   }
 }
 
+// ─── EMAIL: Assessment task reminder to applicant ─────────────────────────
+export async function sendTaskReminderEmail(
+  application: {
+    id: string
+    full_name: string
+    email: string
+    tracking_code: string
+    specialty: string
+    level: string
+  },
+  task: {
+    title_ar: string
+  },
+  assignment: {
+    deadline_hours: number
+    deadline_at: string
+  }
+) {
+  try {
+    await transporter.sendMail({
+      from: `"إترا للتمكين التقني" <${GMAIL_USER}>`,
+      to: application.email,
+      subject: `تذكير بتسليم مهمة التقييم — ${application.tracking_code}`,
+      attachments: [etraLogoAttachment],
+      html: taskReminderTemplate({
+        applicantName: application.full_name,
+        trackingCode: application.tracking_code,
+        specialty: specialtyLabels[application.specialty] || application.specialty,
+        level: levelLabels[application.level] || application.level,
+        taskTitle: task.title_ar,
+        deadlineHours: assignment.deadline_hours,
+        deadlineAt: formatTaskDeadline(assignment.deadline_at),
+      }),
+    })
+
+    await logEmailNotification({
+      applicationId: application.id,
+      type: 'task_reminder',
+      recipientEmail: application.email,
+      recipientName: application.full_name,
+      status: 'sent',
+    })
+  } catch (error) {
+    await logEmailNotification({
+      applicationId: application.id,
+      type: 'task_reminder',
+      recipientEmail: application.email,
+      recipientName: application.full_name,
+      status: 'failed',
+      errorMessage: String(error),
+    })
+    throw error
+  }
+}
+
 // ─── EMAIL: Signed contract copy to applicant ───────────────────────────────
 export async function sendContractCopyEmail(application: {
   id: string
@@ -397,7 +453,7 @@ async function logEmailNotification(data: {
 }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createAdminClient() as any
-  await supabase.from('email_notifications').insert({
+  const { error } = await supabase.from('email_notifications').insert({
     application_id: data.applicationId,
     notification_type: data.type,
     recipient_email: data.recipientEmail,
@@ -406,4 +462,13 @@ async function logEmailNotification(data: {
     sent_at: data.status === 'sent' ? new Date().toISOString() : null,
     error_message: data.errorMessage ?? null,
   })
+
+  if (error) {
+    console.error('Failed to log email notification:', {
+      applicationId: data.applicationId,
+      type: data.type,
+      status: data.status,
+      error: error.message,
+    })
+  }
 }
